@@ -68,17 +68,14 @@ end
 PCAFeatures = zeros(lenScans,1);
 for i = 1:lenScans
     pointCloudShape = lidarData{i}(:,1:3);
+    
     [coeff,score,latent,tsquared,explained,mu] = pca(pointCloudShape);
-    PCAFeatures(i,1:3) = latent(1);
-    PCAFeatures(i,4:6) = coeff(:,2);
-    %PCAFeatures(i,7:9) = coeff(:,3);
+    PCAFeatures(i,1) = latent(1);
+    %PCAFeatures(i,2) = latent(2);
+    %PCAFeatures(i,3) = latent(3);
 end
 
-features = [intensityFeatures PCAFeatures];
-
-% for i = 1:length(features(1,:))
-%     features(:,i) = normalize(features(:,i));
-% end
+features = [intensityFeatures];
 
 labels = string(lidarLabel).';
 G = findgroups(labels);
@@ -95,12 +92,14 @@ trainLabel = labels(trainIdx);
 
 uniqueLabels = unique(testLabel);
 
-for i = 1:length(trainFeatures(1,:))
-    trainFeatures(:,i) = normalize(trainFeatures(:,i));
-    testFeatures(:,i) = normalize(testFeatures(:,i));
-end
+%for i = 1:length(trainFeatures(1,:))
+%    trainFeatures(:,i) = normalize(trainFeatures(:,i));
+%    testFeatures(:,i) = normalize(testFeatures(:,i));
+%end
 
-SVMClassifier = fitcecoc(trainFeatures, trainLabel);
+
+t = templateSVM('KernelFunction','linear','Standardize',true);
+SVMClassifier = fitcecoc(trainFeatures, trainLabel, 'Learners', t);
 
 predictions = predict(SVMClassifier, testFeatures);
 
